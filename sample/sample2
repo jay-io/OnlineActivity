@@ -1,0 +1,146 @@
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('Software Engineer', 'Network Administrator', 'Database Administrator') NOT NULL,
+    phone VARCHAR(15) NOT NULL,
+    qualifications TEXT NOT NULL,
+    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+pdo
+<?php
+$host = 'localhost';
+$db   = 'your_database_name';
+$user = 'your_database_user';
+$pass = 'your_database_password';
+$charset = 'utf8mb4';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+    throw new \PDOException($e->getMessage(), (int)$e->getCode());
+}
+?>
+
+input
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash the password
+    $role = $_POST['role'];
+    $phone = $_POST['phone'];
+    $qualifications = $_POST['qualifications'];
+
+    $sql = "INSERT INTO users (name, email, password, role, phone, qualifications) VALUES (?, ?, ?, ?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$name, $email, $password, $role, $phone, $qualifications]);
+
+    echo "User registered successfully!";
+}
+?>
+
+<form method="POST">
+    <input type="text" name="name" placeholder="Full Name" required><br>
+    <input type="email" name="email" placeholder="Email" required><br>
+    <input type="password" name="password" placeholder="Password" required><br>
+    <select name="role" required>
+        <option value="Software Engineer">Software Engineer</option>
+        <option value="Network Administrator">Network Administrator</option>
+        <option value="Database Administrator">Database Administrator</option>
+    </select><br>
+    <input type="text" name="phone" placeholder="Phone Number" required><br>
+    <textarea name="qualifications" placeholder="Qualifications" required></textarea><br>
+    <button type="submit">Register</button>
+</form>
+
+
+display
+<?php
+$sql = "SELECT * FROM users";
+$stmt = $pdo->query($sql);
+$users = $stmt->fetchAll();
+
+if ($users) {
+    echo "<table border='1'>";
+    echo "<tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Qualifications</th><th>Date Added</th><th>Actions</th></tr>";
+    foreach ($users as $user) {
+        echo "<tr>";
+        echo "<td>{$user['id']}</td>";
+        echo "<td>{$user['name']}</td>";
+        echo "<td>{$user['email']}</td>";
+        echo "<td>{$user['role']}</td>";
+        echo "<td>{$user['phone']}</td>";
+        echo "<td>{$user['qualifications']}</td>";
+        echo "<td>{$user['date_added']}</td>";
+        echo "<td><a href='update.php?id={$user['id']}'>Edit</a> | <a href='delete.php?id={$user['id']}'>Delete</a></td>";
+        echo "</tr>";
+    }
+    echo "</table>";
+} else {
+    echo "No users found.";
+}
+?>
+
+update
+<?php
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $sql = "SELECT * FROM users WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id]);
+    $user = $stmt->fetch();
+
+    if ($user) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $name = $_POST['name'];
+            $email = $_POST['email'];
+            $role = $_POST['role'];
+            $phone = $_POST['phone'];
+            $qualifications = $_POST['qualifications'];
+
+            $sql = "UPDATE users SET name = ?, email = ?, role = ?, phone = ?, qualifications = ? WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$name, $email, $role, $phone, $qualifications, $id]);
+
+            echo "User updated successfully!";
+        }
+    } else {
+        echo "User not found!";
+    }
+}
+?>
+
+<form method="POST">
+    <input type="text" name="name" value="<?php echo $user['name']; ?>" required><br>
+    <input type="email" name="email" value="<?php echo $user['email']; ?>" required><br>
+    <select name="role" required>
+        <option value="Software Engineer" <?php echo ($user['role'] === 'Software Engineer') ? 'selected' : ''; ?>>Software Engineer</option>
+        <option value="Network Administrator" <?php echo ($user['role'] === 'Network Administrator') ? 'selected' : ''; ?>>Network Administrator</option>
+        <option value="Database Administrator" <?php echo ($user['role'] === 'Database Administrator') ? 'selected' : ''; ?>>Database Administrator</option>
+    </select><br>
+    <input type="text" name="phone" value="<?php echo $user['phone']; ?>" required><br>
+    <textarea name="qualifications" required><?php echo $user['qualifications']; ?></textarea><br>
+    <button type="submit">Update</button>
+</form>
+
+delete
+<?php
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $sql = "DELETE FROM users WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id]);
+
+    echo "User deleted successfully!";
+}
+?>
