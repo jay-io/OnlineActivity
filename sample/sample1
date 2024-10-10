@@ -1,0 +1,99 @@
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role ENUM('software_engineer', 'network_administrator', 'database_administrator') NOT NULL,
+  phone_number VARCHAR(20) NOT NULL,
+  address VARCHAR(255) NOT NULL,
+  date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+register.php
+<?php
+// Configuration
+$db_host = 'localhost';
+$db_username = 'root';
+$db_password = '';
+$db_name = 'registration_system';
+
+// Create a new PDO instance
+$pdo = new PDO("mysql:host=$db_host;dbname=$db_name", $db_username, $db_password);
+
+// Check if the form has been submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+  // Get the user input
+  $username = $_POST['username'];
+  $email = $_POST['email'];
+  $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+  $role = $_POST['role'];
+  $phone_number = $_POST['phone_number'];
+  $address = $_POST['address'];
+
+  // Insert the user into the database
+  $stmt = $pdo->prepare('INSERT INTO users (username, email, password, role, phone_number, address) VALUES (:username, :email, :password, :role, :phone_number, :address)');
+  $stmt->bindParam(':username', $username);
+  $stmt->bindParam(':email', $email);
+  $stmt->bindParam(':password', $password);
+  $stmt->bindParam(':role', $role);
+  $stmt->bindParam(':phone_number', $phone_number);
+  $stmt->bindParam(':address', $address);
+  $stmt->execute();
+
+  // Redirect to the login page
+  header('Location: login.php');
+  exit;
+}
+
+// Display the registration form
+?>
+<form action="register.php" method="post">
+  <label for="username">Username:</label>
+  <input type="text" id="username" name="username" required><br><br>
+  <label for="email">Email:</label>
+  <input type="email" id="email" name="email" required><br><br>
+  <label for="password">Password:</label>
+  <input type="password" id="password" name="password" required><br><br>
+  <label for="role">Role:</label>
+  <select id="role" name="role" required>
+    <option value="software_engineer">Software Engineer</option>
+    <option value="network_administrator">Network Administrator</option>
+    <option value="database_administrator">Database Administrator</option>
+  </select><br><br>
+  <label for="phone_number">Phone Number:</label>
+  <input type="tel" id="phone_number" name="phone_number" required><br><br>
+  <label for="address">Address:</label>
+  <input type="text" id="address" name="address" required><br><br>
+  <input type="submit" value="Register">
+</form>
+
+
+readd.php
+<?php
+// Display all users
+$stmt = $pdo->prepare('SELECT * FROM users');
+$stmt->execute();
+$users = $stmt->fetchAll();
+
+foreach ($users as $user) {
+  echo "ID: " . $user['id'] . "<br>";
+  echo "Username: " . $user['username'] . "<br>";
+  echo "Email: " . $user['email'] . "<br>";
+  echo "Role: " . $user['role'] . "<br>";
+  echo "Phone Number: " . $user['phone_number'] . "<br>";
+  echo "Address: " . $user['address'] . "<br>";
+  echo "Date Added: " . $user['date_added'] . "<br><br>";
+}
+?>
+
+update.php
+<?php
+// Update a user
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+  $id = $_POST['id'];
+  $username = $_POST['username'];
+  $email = $_POST['email'];
+  $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+  $role = $_POST['role'];
+  $phone_number = $_POST['phone_number'];
+  $address = ⬤
